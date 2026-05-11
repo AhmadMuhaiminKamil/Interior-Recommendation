@@ -1,26 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0f0f0f;
+  --foreground: #e5e5e5;
+  --accent-primary: #7c3aed;
+  --accent-secondary: #ec4899;
+  --surface-primary: #1a1a1a;
+  --surface-secondary: #262626;
+  --surface-hover: #333333;
+  --border-color: #3f3f3f;
+  --text-muted: #a3a3a3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Mendaftarkan Font ke Utility Class Tailwind */
+  --font-heading: var(--font-heading);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Menggunakan Inter sebagai font default body */
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  /* Menggunakan Poppins untuk semua heading */
+  font-family: var(--font-heading);
+  font-weight: 700;
 }
