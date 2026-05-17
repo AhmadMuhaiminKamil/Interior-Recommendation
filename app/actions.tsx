@@ -55,13 +55,14 @@ export async function analyzeInterior(formData: FormData) {
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = `Analisis foto ruangan ini sebagai desainer interior profesional.
-    Tentukan gaya desainnya dan deskripsikan furnitur yang cocok ditambahkan.
+    Tentukan gaya desainnya dan deskripsikan material finishing yang cocok ditambahkan,
+    seperti wall panel dan vinyl lantai.
     
     OUTPUT HARUS DALAM FORMAT JSON SEPERTI INI (TANPA TEKS LAIN, TANPA BACKTICKS):
     {
       "gaya": "Minimalis",
       "saran": "Berikan 1 kalimat saran profesional di sini",
-      "deskripsi_furnitur": "Deskripsikan furnitur ideal untuk ruangan ini secara detail, termasuk gaya, warna, material, dan nuansa yang cocok"
+      "deskripsi_produk": "Deskripsikan wall panel dan vinyl lantai yang ideal untuk ruangan ini secara detail, termasuk gaya, warna, tekstur, material, dan nuansa yang cocok"
     }`;
 
     const geminiResponse = await fetch(geminiUrl, {
@@ -81,7 +82,7 @@ export async function analyzeInterior(formData: FormData) {
     if (startJson === -1 || endJson === 0) throw new Error("AI tidak mengembalikan format JSON yang valid");
 
     const aiContent = JSON.parse(rawText.substring(startJson, endJson));
-    if (!aiContent.deskripsi_furnitur) throw new Error("AI tidak memberikan deskripsi furnitur");
+    if (!aiContent.deskripsi_produk) throw new Error("AI tidak memberikan deskripsi produk");
 
     // STEP 2: Buat embedding
     const embeddingUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key=${apiKey}`;
@@ -90,7 +91,7 @@ export async function analyzeInterior(formData: FormData) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "models/gemini-embedding-2",
-        content: { parts: [{ text: aiContent.deskripsi_furnitur }] },
+        content: { parts: [{ text: aiContent.deskripsi_produk }] },
         outputDimensionality: 768,
       }),
     });
@@ -113,9 +114,8 @@ export async function analyzeInterior(formData: FormData) {
       success: true,
       analisis: aiContent.saran,
       gaya: aiContent.gaya,
-      deskripsi_furnitur: aiContent.deskripsi_furnitur,
+      deskripsi_produk: aiContent.deskripsi_produk,
       rekomendasiProduk: products || [],
-      // Kembalikan base64 untuk dipakai visualisasi nanti
       imageBase64: base64Data,
       imageMimeType: file.type,
     };
@@ -124,55 +124,5 @@ export async function analyzeInterior(formData: FormData) {
     if (isRedirectError(error)) throw error;
     console.error("ERROR DETAIL:", error);
     return { success: false, error: `Sistem Error: ${error.message}` };
-  }
-}
-
-export async function generateRoomVisualization(
-  imageBase64: string,
-  imageMimeType: string,
-  gaya: string,
-  deskripsi_furnitur: string,
-  rekomendasiProduk: { nama_barang: string }[]
-) {
-  try {
-    const hfToken = process.env.HF_TOKEN;
-    if (!hfToken) throw new Error("HF_TOKEN tidak ditemukan");
-
-    const produkList = rekomendasiProduk.map(p => `- ${p.nama_barang}`).join('\n');
-
-    const prompt = `Interior room, ${gaya} style. ${deskripsi_furnitur}. 
-    Furniture includes: ${produkList}. 
-    Professional interior photography, natural lighting, realistic, high quality, 4k.`;
-
-    const response = await fetch(
-  "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-  {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${hfToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ inputs: prompt }),
-  }
-);
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || "Kesalahan Hugging Face API");
-    }
-
-    // Response berupa binary image
-    const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-
-    return {
-      success: true,
-      imageBase64: base64,
-      mimeType: "image/jpeg",
-    };
-
-  } catch (error: any) {
-    console.error("ERROR VISUALISASI:", error);
-    return { success: false, error: `Gagal generate visualisasi: ${error.message}` };
   }
 }

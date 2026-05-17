@@ -1,6 +1,6 @@
 "use client";
 import { useState, ChangeEvent } from 'react';
-import { analyzeInterior, logout, generateRoomVisualization } from './actions';
+import { analyzeInterior, logout} from './actions';
 
 interface Produk {
   id: string;
@@ -8,13 +8,14 @@ interface Produk {
   harga: number;
   link_gambar: string;
   deskripsi: string;
+  similarity: number;
 }
 
 interface AnalisisResult {
   success: boolean;
   gaya?: string;
   analisis?: string;
-  deskripsi_furnitur?: string;
+  deskripsi_produk?: string;
   rekomendasiProduk?: Produk[];
   imageBase64?: string;
   imageMimeType?: string;
@@ -58,27 +59,15 @@ export default function Home() {
     setLoading(false);
   };
 
-  const handleVisualisasi = async () => {
-    if (!data?.imageBase64 || !data?.rekomendasiProduk) return;
-    setLoadingVisualisasi(true);
-    const result = await generateRoomVisualization(
-      data.imageBase64,
-      data.imageMimeType || "image/jpeg",
-      data.gaya || "Minimalis",
-      data.deskripsi_furnitur || "",
-      data.rekomendasiProduk
-    );
-    if (result.success && result.imageBase64) {
-      setVisualisasi(`data:${result.mimeType};base64,${result.imageBase64}`);
-    } else {
-      alert(result.error);
-    }
-    setLoadingVisualisasi(false);
-  };
-
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
+  };
+
+  const getSimilarityColor = (score: number) => {
+    if (score >= 0.8) return '#22c55e';
+    if (score >= 0.6) return '#a78bfa';
+    return '#f59e0b';
   };
 
   return (
@@ -191,57 +180,26 @@ export default function Home() {
                         <span className="text-purple-400 font-bold text-xl">
                           Rp {item.harga.toLocaleString('id-ID')}
                         </span>
-                        <button className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all">
-                          Beli
-                        </button>
+                        {item.similarity !== undefined && (
+                          <span
+                            style={{
+                              color: getSimilarityColor(item.similarity),
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              background: 'rgba(0,0,0,0.2)',
+                              padding: '4px 10px',
+                              borderRadius: '999px',
+                              border: `1px solid ${getSimilarityColor(item.similarity)}40`,
+                            }}
+                          >
+                            {(item.similarity * 100).toFixed(1)}% match
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Tombol Visualisasi */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-3xl border border-slate-700/50">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-100 mb-2">✨ Visualisasikan Ruangan Anda</h2>
-                <p className="text-slate-400 text-sm">Lihat tampilan ruangan Anda setelah didekorasi dengan furnitur rekomendasi AI</p>
-              </div>
-
-              <button
-                onClick={handleVisualisasi}
-                disabled={loadingVisualisasi}
-                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-violet-600/30 disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none"
-              >
-                {loadingVisualisasi ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                    Sedang Membuat Visualisasi... (30-60 detik)
-                  </span>
-                ) : "🏠 Generate Visualisasi Ruangan"}
-              </button>
-
-              {/* Hasil Visualisasi */}
-              {visualisasi && (
-                <div className="mt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-slate-100">Hasil Visualisasi:</h3>
-                    <a
-                      href={visualisasi}
-                      download="visualisasi-ruangan.png"
-                      className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
-                    >
-                      ⬇️ Download
-                    </a>
-                  </div>
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-700 shadow-2xl shadow-purple-900/30">
-                    <img src={visualisasi} alt="Visualisasi Ruangan" className="w-full object-contain" />
-                  </div>
-                  <p className="text-slate-500 text-xs text-center mt-3">
-                    * Hasil visualisasi adalah ilustrasi AI, bukan foto nyata
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         )}
