@@ -10,6 +10,43 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Helper: fetch ke Gemini dengan retry otomatis saat model sedang overload/high demand
+async function fetchGeminiWithRetry(
+  url: string,
+  body: object,
+  maxRetries = 2,
+): Promise<any> {
+  let lastError: any = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) return data;
+
+    const message: string = data.error?.message || "";
+    const isOverloaded =
+      response.status === 503 ||
+      /overload|high demand|unavailable/i.test(message);
+
+    lastError = new Error(message || "Kesalahan API Gemini");
+
+    if (!isOverloaded || attempt === maxRetries) {
+      throw lastError;
+    }
+
+    // Tunggu sebentar sebelum mencoba lagi (exponential backoff sederhana)
+    await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+  }
+
+  throw lastError;
+}
+
 export async function login(username: string, password: string) {
   const { data: user, error } = await supabase
     .from("users")
@@ -75,24 +112,16 @@ OUTPUT HARUS DALAM FORMAT JSON SEPERTI INI (TANPA TEKS LAIN, TANPA BACKTICKS):
   "deskripsi_furnitur": "Deskripsikan lantai vinyl ideal untuk ruangan ini: warna, motif kayu, nuansa (terang/gelap), tekstur, dan karakter visual yang cocok dengan gaya ruangan${userInput ? ", dengan mempertimbangkan preferensi pengguna di atas jika relevan" : ""}"
 }`;
 
-    const geminiResponse = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: file.type, data: base64Data } },
-            ],
-          },
-        ],
-      }),
+    const geminiData = await fetchGeminiWithRetry(geminiUrl, {
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: file.type, data: base64Data } },
+          ],
+        },
+      ],
     });
-
-    const geminiData = await geminiResponse.json();
-    if (!geminiResponse.ok)
-      throw new Error(geminiData.error?.message || "Kesalahan API Gemini");
 
     const rawText: string = geminiData.candidates[0].content.parts[0].text;
     const startJson = rawText.indexOf("{");
@@ -113,21 +142,11 @@ OUTPUT HARUS DALAM FORMAT JSON SEPERTI INI (TANPA TEKS LAIN, TANPA BACKTICKS):
 
     // STEP 2: Buat embedding
     const embeddingUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key=${apiKey}`;
-    const embeddingResponse = await fetch(embeddingUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "models/gemini-embedding-2",
-        content: { parts: [{ text: aiContent.deskripsi_furnitur }] },
-        outputDimensionality: 768,
-      }),
+    const embeddingData = await fetchGeminiWithRetry(embeddingUrl, {
+      model: "models/gemini-embedding-2",
+      content: { parts: [{ text: aiContent.deskripsi_furnitur }] },
+      outputDimensionality: 768,
     });
-
-    const embeddingData = await embeddingResponse.json();
-    if (!embeddingResponse.ok)
-      throw new Error(
-        embeddingData.error?.message || "Kesalahan Embedding API",
-      );
 
     const queryEmbedding: number[] = embeddingData.embedding.values;
 
