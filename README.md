@@ -45,6 +45,7 @@ Buat file `.env.local` di root project, lalu isi dengan variabel berikut:
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 # Google Gemini API
@@ -54,6 +55,7 @@ GEMINI_API_KEY=your_gemini_api_key
 | Variabel | Keterangan |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL project Supabase kamu |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon/public key Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key Supabase (digunakan di server, jaga kerahasiaannya) |
 | `GEMINI_API_KEY` | API key untuk mengakses Gemini API (analisis gambar & embedding) |
 
