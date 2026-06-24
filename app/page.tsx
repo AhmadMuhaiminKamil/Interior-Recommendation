@@ -44,30 +44,6 @@ const FURNITUR_CATALOG: { type: FurniturType; label: string; emoji: string }[] =
   { type: 'lampu',     label: 'Lampu',      emoji: '💡' },
 ];
 
-// --- DATA SIMULASI PRODUK (FALLBACK) ---
-const MOCK_PRODUCTS: Produk[] = [
-  {
-    id: "1",
-    nama_barang: "Vinyl Oak Premium Natural",
-    harga: 350000,
-    link_gambar: "https://images.unsplash.com/photo-1541123437800-1bb1317badc2?auto=format&fit=crop&w=600&q=80",
-    deskripsi: "Lantai vinyl berkualitas tinggi dengan serat kayu oak alami yang memberikan nuansa hangat, elegan, dan sangat cocok untuk gaya Japandi atau Minimalis Modern."
-  },
-  {
-    id: "2",
-    nama_barang: "Vinyl Dark Ash Wood",
-    harga: 330000,
-    link_gambar: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?auto=format&fit=crop&w=600&q=80",
-    deskripsi: "Serat kayu ash abu-abu gelap yang memberikan kesan maskulin, industrial, modern, serta sangat tahan terhadap goresan dan air."
-  },
-  {
-    id: "3",
-    nama_barang: "Teak Wood Parket Luxury",
-    harga: 450000,
-    link_gambar: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80",
-    deskripsi: "Parket kayu jati mewah dengan perlindungan UV ekstra, menghadirkan estetika berkelas tinggi untuk ruang keluarga Anda."
-  }
-];
 
 const DEFAULT_FURNITUR: FurniturItem[] = [
   { id: 'sofa-1',    type: 'sofa',      position: [0, 0, -1.5],  label: 'Sofa' },
@@ -466,7 +442,6 @@ export default function App() {
         gaya: "Japandi Modern",
         analisis: "Ruangan Anda memiliki potensi pencahayaan alami yang sangat baik. Kami merekomendasikan penggunaan lantai bertekstur kayu jati berwarna hangat guna menyeimbangkan dinding netral dan mempertegas kesan luas serta asri.",
         deskripsi_furnitur: "Saran vinyl lantai dengan serat kayu jati hangat.",
-        rekomendasiProduk: MOCK_PRODUCTS
       });
     } finally {
       setLoading(false);
