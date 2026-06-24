@@ -120,12 +120,6 @@ export default function LoginPage() {
                   <label htmlFor="password" className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
                     Password
                   </label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-xs text-purple-400/80 hover:text-purple-300 transition-colors font-medium"
-                  >
-                    Lupa password?
-                  </Link>
                 </div>
                 <div className="relative group">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors">
